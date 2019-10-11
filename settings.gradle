@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name='pessoal_consome_ws_rest_json_livros'
