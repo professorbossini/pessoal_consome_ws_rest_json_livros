@@ -3,7 +3,6 @@ package br.com.bossini.pessoal_consome_ws_rest_json_livros;
 import java.io.Serializable;
 
 public class Livro implements Serializable {
-
     private Long id;
     private String titulo;
     private String autor;
@@ -15,7 +14,7 @@ public class Livro implements Serializable {
         setAutor(autor);
         setEdicao(edicao);
     }
-
+    //getters/setters
     public Long getId() {
         return id;
     }
@@ -46,6 +45,4 @@ public class Livro implements Serializable {
     public void setEdicao(String edicao) {
         this.edicao = edicao;
     }
-
-
 }

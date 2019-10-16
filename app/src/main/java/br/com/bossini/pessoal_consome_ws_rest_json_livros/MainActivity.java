@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,12 +41,22 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView livrosRecyclerView;
     private LivroAdapter adapter;
     private List <Livro> livros;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         livrosRecyclerView = findViewById(R.id.livrosRecyclerView);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        //no método onCreate
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                obterLivros();
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
         livros = new ArrayList<>();
         adapter = new LivroAdapter(this, livros);
         LinearLayoutManager llm = new LinearLayoutManager(this);
@@ -58,42 +69,49 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String url = montaUrl(
-                        getString(R.string.host_address),
-                        getString(R.string.host_port),
-                        getString(R.string.endpoint_base),
-                        getString(R.string.endpoint_listar)
-                );
-               requestQueue.add(new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
-
-                   @Override
-                   public void onResponse(JSONArray response) {
-                       //Toast.makeText(MainActivity.this, response.toString(), Toast.LENGTH_SHORT).show();
-
-                       for (int i = 0; i < response.length(); i++){
-                           try {
-                               JSONObject iesimo = response.getJSONObject(i);
-                               String titulo = iesimo.getString("titulo");
-                               String autor = iesimo.getString("autor");
-                               String edicao = iesimo.getString("edicao");
-                               livros.add(new Livro (titulo ,autor, edicao));
-                           } catch (JSONException e) {
-                               e.printStackTrace();
-                           }
-
-                       }
-                       adapter.notifyDataSetChanged();
-                   }
-               }, new Response.ErrorListener() {
-                   @Override
-                   public void onErrorResponse(VolleyError error) {
-                       error.printStackTrace();
-                   }
-               }));
+                obterLivros();
             }
         });
 
+        //no método onCreate
         requestQueue = Volley.newRequestQueue(this);
+    }
+
+    public void obterLivros (){
+        String url = montaUrl(
+                getString(R.string.host_address),
+                getString(R.string.host_port),
+                getString(R.string.endpoint_base),
+                getString(R.string.endpoint_listar)
+        );
+        requestQueue.add(new JsonArrayRequest(
+                            Request.Method.GET,
+                            url,
+                            null,
+                            new Response.Listener<JSONArray>() {
+                                @Override
+                                public void onResponse(JSONArray response) {
+                                    livros.clear();
+                                    for (int i = 0; i < response.length(); i++){
+                                        try {
+                                            JSONObject iesimo = response.getJSONObject(i);
+                                            String titulo = iesimo.getString("titulo");
+                                            String autor = iesimo.getString("autor");
+                                            String edicao = iesimo.getString("edicao");
+                                            livros.add(new Livro (titulo ,autor, edicao));
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                    adapter.notifyDataSetChanged();
+                                }
+                            },
+                            new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    error.printStackTrace();
+                                }
+                            }));
     }
 
     public String montaUrl (String... args){
@@ -110,7 +128,6 @@ class LivroViewHolder extends RecyclerView.ViewHolder{
     public TextView tituloTextView;
     public TextView autorTextView;
     public TextView edicaoTextView;
-
     public LivroViewHolder (View raiz){
         super (raiz);
         this.tituloTextView = raiz.findViewById(R.id.tituloTextView);
